@@ -3,6 +3,7 @@ package com.dav1n9.claudetest.controller;
 import com.dav1n9.claudetest.dto.request.UserCreateRequest;
 import com.dav1n9.claudetest.dto.request.UserUpdateRequest;
 import com.dav1n9.claudetest.dto.response.UserResponse;
+import com.dav1n9.claudetest.dto.response.UserStatisticsResponse;
 import com.dav1n9.claudetest.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,5 +76,12 @@ public class UserController {
             @Parameter(description = "사용자 ID") @PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/statistics")
+    @Operation(summary = "사용자 통계 조회", description = "사용자 및 게시글 통계를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    public ResponseEntity<UserStatisticsResponse> getUserStatistics() {
+        return ResponseEntity.ok(userService.getUserStatistics());
     }
 }

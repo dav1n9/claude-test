@@ -3,6 +3,7 @@ package com.dav1n9.claudetest.service;
 import com.dav1n9.claudetest.dto.request.UserCreateRequest;
 import com.dav1n9.claudetest.dto.request.UserUpdateRequest;
 import com.dav1n9.claudetest.dto.response.UserResponse;
+import com.dav1n9.claudetest.dto.response.UserStatisticsResponse;
 import com.dav1n9.claudetest.entity.User;
 import com.dav1n9.claudetest.exception.DuplicateResourceException;
 import com.dav1n9.claudetest.exception.ResourceNotFoundException;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -73,5 +76,50 @@ public class UserService {
             throw new ResourceNotFoundException("User", "id", id);
         }
         userRepository.deleteById(id);
+    }
+
+    public UserStatisticsResponse getUserStatistics() {
+        List<User> users = userRepository.findAll();
+
+        long totalUsers = users.size();
+        long totalPosts = 0;
+
+        List<UserStatisticsResponse.UserPostCount> userPostCounts = new ArrayList<>();
+
+        for (User user : users) {
+            int postCount = user.getPosts().size();
+            totalPosts = totalPosts + postCount;
+
+            UserStatisticsResponse.UserPostCount upc = new UserStatisticsResponse.UserPostCount();
+            upc.setUserId(user.getId());
+            upc.setUserName(user.getUserName());
+            upc.setPostCount(postCount);
+            userPostCounts.add(upc);
+        }
+
+        userPostCounts.sort(new Comparator<UserStatisticsResponse.UserPostCount>() {
+            @Override
+            public int compare(UserStatisticsResponse.UserPostCount o1, UserStatisticsResponse.UserPostCount o2) {
+                return o2.getPostCount() - o1.getPostCount();
+            }
+        });
+
+        List<UserStatisticsResponse.UserPostCount> topPosters = new ArrayList<>();
+        for (int i = 0; i < Math.min(5, userPostCounts.size()); i++) {
+            topPosters.add(userPostCounts.get(i));
+        }
+
+        double avg = 0;
+        if (totalUsers > 0) {
+            avg = (double) totalPosts / totalUsers;
+        }
+
+        UserStatisticsResponse response = new UserStatisticsResponse();
+        response.setTotalUsers(totalUsers);
+        response.setTotalPosts(totalPosts);
+        response.setAveragePostsPerUser(avg);
+        response.setTopPosters(topPosters);
+
+        return response;
     }
 }
