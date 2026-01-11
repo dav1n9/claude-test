@@ -1,0 +1,37 @@
+# 설정 파일
+application.yml
+application.properties
+application-*.yml
+application-*.properties
+
+# 환경 변수 파일
+.env
+.env.local
+.env.production
+
+# 민감한 정보가 포함된 리소스
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+
+# 데이터베이스 설정
+database.properties
+
+# 시크릿 키 파일
+secrets/
+*.key
+*.pem
+*.p12
+
+# IDE 설정 (선택사항)
+.idea/
+*.iml
+
+# 빌드 결과물
+build/
+target/
+*.jar
+*.war
+
+# 기타 민감 정보
+credentials.json
+serviceAccountKey.json
