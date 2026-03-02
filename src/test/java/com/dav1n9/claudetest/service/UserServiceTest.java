@@ -129,4 +129,6 @@ class UserServiceTest {
         assertThat(result.getTotalPosts()).isEqualTo(0);
         assertThat(result.getAveragePostsPerUser()).isEqualTo(0);
     }
+
+    // test
 }
