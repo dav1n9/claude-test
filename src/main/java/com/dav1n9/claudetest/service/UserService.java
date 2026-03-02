@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,48 +76,26 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    private static final int TOP_POSTERS_LIMIT = 5;
+
+    @Transactional(readOnly = true)
     public UserStatisticsResponse getUserStatistics() {
-        List<User> users = userRepository.findAll();
+        long totalUsers = userRepository.count();
+        long totalPosts = userRepository.countAllPosts();
 
-        long totalUsers = users.size();
-        long totalPosts = 0;
+        List<Object[]> postCounts = userRepository.findUserPostCounts();
 
-        List<UserStatisticsResponse.UserPostCount> userPostCounts = new ArrayList<>();
+        List<UserStatisticsResponse.UserPostCount> topPosters = postCounts.stream()
+                .limit(TOP_POSTERS_LIMIT)
+                .map(row -> new UserStatisticsResponse.UserPostCount(
+                        (Long) row[0],
+                        (String) row[1],
+                        ((Long) row[2]).intValue()
+                ))
+                .collect(Collectors.toList());
 
-        for (User user : users) {
-            int postCount = user.getPosts().size();
-            totalPosts = totalPosts + postCount;
+        double averagePostsPerUser = totalUsers > 0 ? (double) totalPosts / totalUsers : 0;
 
-            UserStatisticsResponse.UserPostCount upc = new UserStatisticsResponse.UserPostCount();
-            upc.setUserId(user.getId());
-            upc.setUserName(user.getUserName());
-            upc.setPostCount(postCount);
-            userPostCounts.add(upc);
-        }
-
-        userPostCounts.sort(new Comparator<UserStatisticsResponse.UserPostCount>() {
-            @Override
-            public int compare(UserStatisticsResponse.UserPostCount o1, UserStatisticsResponse.UserPostCount o2) {
-                return o2.getPostCount() - o1.getPostCount();
-            }
-        });
-
-        List<UserStatisticsResponse.UserPostCount> topPosters = new ArrayList<>();
-        for (int i = 0; i < Math.min(5, userPostCounts.size()); i++) {
-            topPosters.add(userPostCounts.get(i));
-        }
-
-        double avg = 0;
-        if (totalUsers > 0) {
-            avg = (double) totalPosts / totalUsers;
-        }
-
-        UserStatisticsResponse response = new UserStatisticsResponse();
-        response.setTotalUsers(totalUsers);
-        response.setTotalPosts(totalPosts);
-        response.setAveragePostsPerUser(avg);
-        response.setTopPosters(topPosters);
-
-        return response;
+        return new UserStatisticsResponse(totalUsers, totalPosts, averagePostsPerUser, topPosters);
     }
 }
